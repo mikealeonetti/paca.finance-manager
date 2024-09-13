@@ -3,6 +3,20 @@ Script to manage your paca.finance stakes.
 
 Script also respects claim/compound minimums. If your schedule will cause the compound/claim to fire too early, then the script will instead choose the date/time when you will be eligible to claim/compound.
 
+## Running the program
+To start this up first download this repo then make sure to install all dependencies.
+
+```bash
+npm install
+```
+Then make sure to add a .env config (see below).
+
+Finally, run it.
+
+```bash
+npm start
+```
+
 ## Here is a sample .env config
 ```.env
 # Switch which network info to use
