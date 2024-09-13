@@ -1,0 +1,38 @@
+{
+  "name": "contract-runner",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "tsc && NODE_OPTIONS=--enable-source-maps node dist/index.js",
+    "calc": "tsc && NODE_OPTIONS=--enable-source-maps node dist/tools/optimal-calculator.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@pancakeswap/sdk": "^5.8.8",
+    "@types/bluebird": "^3.5.42",
+    "@types/debug": "^4.1.12",
+    "@types/lodash": "^4.17.7",
+    "@types/node": "^22.5.4",
+    "@typescript-eslint/eslint-plugin": "^8.4.0",
+    "@typescript-eslint/parser": "^8.4.0",
+    "bluebird": "^3.7.2",
+    "date-fns": "^3.6.0",
+    "debug": "^4.3.7",
+    "decimal.js": "^10.4.3",
+    "dotenv": "^16.4.5",
+    "eslint": "^9.9.1",
+    "ethers": "^6.13.2",
+    "lodash": "^4.17.21",
+    "logform": "^2.6.1",
+    "sequelize": "^6.37.3",
+    "sqlite3": "^5.1.7",
+    "telegraf": "^4.16.3",
+    "typescript": "^5.5.4",
+    "umzug": "^3.8.1",
+    "winston": "^3.14.2"
+  }
+}

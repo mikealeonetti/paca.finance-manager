@@ -1,0 +1,55 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_pacafinanceAddress",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_user",
+                "type": "address"
+            }
+        ],
+        "name": "getDailyEarnings",
+        "outputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "stakeIndices",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "dailyEarnings",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint256",
+                "name": "totalDailyEarnings",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "pacafinance",
+        "outputs": [
+            {
+                "internalType": "contract IPacafinanceV2",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]
