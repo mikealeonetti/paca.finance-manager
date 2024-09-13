@@ -24,7 +24,7 @@ declare module "decimal.js" {
         adjustDecimalsLeft(shiftLeft: number): Decimal;
         adjustDecimalsRight(shiftRight: number): Decimal;
         //toPercent() : Percent;
-        toBigInt(shiftRight : number): bigint;
+        toBigInt(shiftRight? : number): bigint;
     }
 
     namespace Decimal {

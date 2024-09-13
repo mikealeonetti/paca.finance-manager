@@ -56,7 +56,7 @@ export class Engine {
 
                         // Send through TG
                         await alertViaTelegram(`We are going to run ${account.readableKey} again on ${nextRun}.`);
-                        logger.info(`We are going to run a '${nextAction}' on ${account.readableKey} on ${nextRun}.`);
+                        logger.info(`We are going to run a '${nextAction.name}' on ${account.readableKey} on ${nextRun}.`);
                         // Dont' keep notifying
                         notifiedAboutNextRun[account.publicKey] = true;
                     }

@@ -74,8 +74,13 @@ export default class TransctionHelper {
             const estimatedGas = await provider.estimateGas(transaction);
 
             // Now multiplier
-            transaction.gasLimit = estimatedGas * BigInt( GAS_LIMIT_MULTIPLIER );
+            transaction.gasLimit = Decimal
+            .fromBigNumberish(estimatedGas)
+            .times(GAS_LIMIT_MULTIPLIER )
+            .toBigInt();
         }
+
+        debug("getCommonTxnOptions transaction=", transaction);
 
         return transaction;
     }
