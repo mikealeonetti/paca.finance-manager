@@ -60,24 +60,24 @@ export default class TransctionHelper {
         throw new Error("Could not get transaction receipt.");
     }
 
-    public static async getCommonTxnOptions() : Promise<TransactionRequest> {
-        const transaction : TransactionRequest = {};
+    public static async getCommonTxnOptions(estimateGasCall?: Promise<bigint>): Promise<TransactionRequest> {
+        const transaction: TransactionRequest = {};
 
         // Tweak the gas
-        if( GAS_PRICE>0 ) {
+        if (GAS_PRICE > 0) {
             // Set the gas prizzle
-            transaction.gasPrice = ethers.parseUnits(GAS_PRICE.toString(), "gwei" )
+            transaction.gasPrice = ethers.parseUnits(GAS_PRICE.toString(), "gwei")
         }
 
-        if( GAS_LIMIT_MULTIPLIER ) {
+        if (estimateGasCall && GAS_LIMIT_MULTIPLIER) {
             // Estimation gas
-            const estimatedGas = await provider.estimateGas(transaction);
+            const estimatedGas = await estimateGasCall;
 
             // Now multiplier
             transaction.gasLimit = Decimal
-            .fromBigNumberish(estimatedGas)
-            .times(GAS_LIMIT_MULTIPLIER )
-            .toBigInt();
+                .fromBigNumberish(estimatedGas)
+                .times(GAS_LIMIT_MULTIPLIER)
+                .toBigInt();
         }
 
         debug("getCommonTxnOptions transaction=", transaction);

@@ -13,6 +13,7 @@ import { ClientTransactionResponse } from "../types";
 import TransctionHelper from "../helpers/TransactionHelper";
 import Decimal from "decimal.js";
 import { DBStat } from "../database/models/DBStat";
+import Bluebird from "bluebird";
 
 const debug = Debug("unibalancer:account");
 
@@ -219,6 +220,8 @@ export class Account {
             }
 
             debug("Looping through.");
+
+            await Bluebird.delay(2_000);
         }
     }
 

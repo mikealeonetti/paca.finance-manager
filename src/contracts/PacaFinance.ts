@@ -28,13 +28,17 @@ export default class PacaFiannce {
     }
 
     async compoundAllRewards() : Promise<TransactionResponse> {
-        const extraOpts = await TransactionHelper.getCommonTxnOptions();
+        const extraOpts = await TransactionHelper.getCommonTxnOptions(
+            this.contract.compoundAllRewards.estimateGas()
+        );
 
         return this.contract.compoundAllRewards(extraOpts);
     }
 
     async claimAllRewards() : Promise<TransactionResponse> {
-        const extraOpts = await TransactionHelper.getCommonTxnOptions();
+        const extraOpts = await TransactionHelper.getCommonTxnOptions(
+            this.contract.claimAllRewards.estimateGas()
+        );
 
         return this.contract.claimAllRewards(extraOpts);
     }
