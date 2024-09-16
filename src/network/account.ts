@@ -8,12 +8,12 @@ import { TimeType } from "../util";
 
 import Debug from 'debug';
 import logger from "../logger";
-import { alertViaTelegram } from "../telegram";
 import { ClientTransactionResponse } from "../types";
 import TransctionHelper from "../helpers/TransactionHelper";
 import Decimal from "decimal.js";
 import { DBStat } from "../database/models/DBStat";
 import Bluebird from "bluebird";
+import sendAllAlerts from "../alert";
 
 const debug = Debug("unibalancer:account");
 
@@ -238,7 +238,7 @@ Rewards amount: ${rewards.toFixed(2)} USDT
 Gas used: ${bnbUsd.toFixed()} BNB`;
 
         logger.info(reportString);
-        await alertViaTelegram(reportString);
+        await sendAllAlerts(reportString);
     }
 
     async claim(): Promise<boolean> {
@@ -259,7 +259,7 @@ Gas used: ${bnbUsd.toFixed()} BNB`;
                 minimumRewards
             );
 
-            await alertViaTelegram(`Account [${this.readableKey}] wants to claim. We only have ${rewards} rewards but we want ${minimumRewards} rewards.`);
+            await sendAllAlerts(`Account [${this.readableKey}] wants to claim. We only have ${rewards} rewards but we want ${minimumRewards} rewards.`);
 
             // Set the next run time to try again
             await this.setNextRun();
@@ -299,7 +299,7 @@ Gas used: ${bnbUsd.toFixed()} BNB`;
                 minimumRewards
             );
 
-            await alertViaTelegram(`Account [${this.readableKey}] wants to compound. We only have ${rewards} rewards but we want ${minimumRewards} rewards.`);
+            await sendAllAlerts(`Account [${this.readableKey}] wants to compound. We only have ${rewards} rewards but we want ${minimumRewards} rewards.`);
 
             // Set the next run time to try again
             await this.setNextRun();
@@ -352,7 +352,7 @@ Gas balance: ${gasBalance.toFixed()} BNB`;
 
         // Report and log
         logger.info(reportSring);
-        await alertViaTelegram(reportSring);
+        await sendAllAlerts(reportSring);
 
         // Save the stats
         await DBStat.create({
@@ -384,7 +384,7 @@ Gas balance: ${gasBalance.toFixed()} BNB`;
                     actionSuccess = await this.compound();
                     break;
                 case "noop":
-                    await alertViaTelegram(`Account [${this.readableKey}] executed a no-nop.`);
+                    await sendAllAlerts(`Account [${this.readableKey}] executed a no-nop.`);
                     logger.info("Account [%s] executed a no-op.", this.readableKey);
 
                     actionSuccess = true;
@@ -402,7 +402,7 @@ Gas balance: ${gasBalance.toFixed()} BNB`;
         }
         catch (e) {
             logger.error("Account [%s] error executing action '%s'.", this.readableKey, action?.name, e);
-            await alertViaTelegram(`Account [${this.readableKey}]`)
+            await sendAllAlerts(`Account [${this.readableKey}]`)
         }
     }
 }

@@ -1,12 +1,12 @@
 import { Context, Telegraf } from "telegraf";
 
 import Debug from 'debug';
-import { TELEGRAM_BOT_TOKEN } from "./constants";
+import { TELEGRAM_BOT_TOKEN } from "../constants";
 import { Update } from "telegraf/typings/core/types/typegram";
-import { DBTelegraf } from "./database";
-import logger from "./logger";
+import { DBTelegraf } from "../database";
+import logger from "../logger";
 
-const debug = Debug( "unibalancer:telegram" );
+const debug = Debug( "unibalancer:alerts:telegram" );
 
 // Our bot
 let bot : Telegraf<Context<Update>>;
@@ -58,7 +58,7 @@ else
 /**
  * Send a message
  */
-export async function alertViaTelegram( message : string ) : Promise<void> {
+export default async function alert( message : string ) : Promise<void> {
 	debug( "Looking to send message", message );
 
 	// We don't have a bot, don't send a message

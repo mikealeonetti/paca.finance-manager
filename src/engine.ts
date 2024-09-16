@@ -1,6 +1,6 @@
 import Bluebird from "bluebird";
 import logger from "./logger";
-import { alertViaTelegram } from "./telegram";
+import sendAllAlerts from './alert';
 
 import Debug from 'debug';
 import { accounts } from "./network";
@@ -23,7 +23,7 @@ export class Engine {
             // Did we notify about the next runtime?
             const notifiedAboutNextRun : Record<string, boolean> = {};
 
-            await alertViaTelegram("Paca.Finance Manager started.")
+            await sendAllAlerts("Paca.Finance Manager started.")
 
             while (this.running) {
                 // now
@@ -55,7 +55,7 @@ export class Engine {
                         const nextAction = await account.getNextAction();
 
                         // Send through TG
-                        await alertViaTelegram(`We are going to run a '${nextAction.name}' on ${account.readableKey} on ${nextRun}.`);
+                        await sendAllAlerts(`We are going to run a '${nextAction.name}' on ${account.readableKey} on ${nextRun}.`);
                         logger.info(`We are going to run a '${nextAction.name}' on ${account.readableKey} on ${nextRun}.`);
                         // Dont' keep notifying
                         notifiedAboutNextRun[account.publicKey] = true;

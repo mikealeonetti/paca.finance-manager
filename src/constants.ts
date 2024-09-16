@@ -23,3 +23,14 @@ export const PACA_HELPER_CONTRACT_ADDRESS = "0x48B4D9E7c1afD58F56893Cb707a5e5155
 
 export const GAS_PRICE = Number(process.env.GAS_PRICE) || 0;
 export const GAS_MAX_MULTIPLIER = Number(process.env.GAS_MAX_MULTIPLIER) || 0;
+
+export const EMAIL_HOST = process.env.EMAIL_HOST;
+export const EMAIL_PORT = Number( process.env.EMAIL_PORT ) || undefined;
+export const EMAIL_IS_SECURE = toLower(process.env.EMAIL_IS_SECURE) == "true";
+export const EMAIL_USER = process.env.EMAIL_USER;
+export const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
+export const EMAIL_TO = process.env.EMAIL_TO;
+export const EMAIL_FROM = process.env.EMAIL_FROM;
+
+// 5 minutes of messages
+export const EMAIL_TIMEOUT = 1000 * 60 * 5;
