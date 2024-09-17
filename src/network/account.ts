@@ -221,7 +221,7 @@ export class Account {
 
             debug("Looping through.");
 
-            await Bluebird.delay(2_000);
+            await Bluebird.delay(10_000);
         }
     }
 
