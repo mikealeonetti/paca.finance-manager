@@ -38,6 +38,8 @@ export default class TransctionHelper {
     private static async resolveTransactionResponsePrivate(response: TransactionResponse): Promise<ClientTransactionResponse> {
         let receipt: TransactionReceipt | null = null;
 
+        debug("resolveTransactionResponsePrivate response=", response);
+
         while (receipt === null) {
             try {
                 receipt = await provider.getTransactionReceipt(response.hash)
