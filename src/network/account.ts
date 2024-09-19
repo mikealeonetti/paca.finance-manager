@@ -1,5 +1,5 @@
 import { addDays, addMilliseconds, addMinutes, max as dateMax, setHours, setMilliseconds, setMinutes, setSeconds } from "date-fns";
-import { TransactionResponse, Wallet } from "ethers";
+import { LogDescription, TransactionReceipt, TransactionResponse, Wallet } from "ethers";
 import { chain } from "lodash";
 import { provider, WBNB_BSC } from ".";
 import PacaFiannce from "../contracts/PacaFinance";
@@ -272,13 +272,46 @@ Gas used: ${bnbUsd.toFixed()} BNB`;
             () => this.pacaFinanceContract.claimAllRewards()
         );
 
+        // Get the log we want
+        const decodedLogEvent = this.findInReceiptLogs(clientTxnResponse.receipt, "Claimed");
+
+        const claimedAmountBn = decodedLogEvent?.args[1];
+        let claimedAmount: Decimal;
+
+        if (claimedAmountBn) {
+            claimedAmount = Decimal.fromBigNumberish(claimedAmountBn);
+
+            logger.info("Found claimed amount: %s", claimedAmount.toFixed());
+        }
+        else {
+            logger.error("Could not find claimed amount in logs.", decodedLogEvent);
+            claimedAmount = rewards;
+        }
+
         // Add tp the claimed
         await Promise.all([
-            this.reportAction(rewards, "claim", clientTxnResponse),
-            DBProperty.addClaimed(this.publicKey, "usdt", rewards)
+            this.reportAction(claimedAmount, "claim", clientTxnResponse),
+            DBProperty.addClaimed(this.publicKey, "usdt", claimedAmount)
         ]);
 
         return true;
+    }
+
+    findInReceiptLogs(receipt: TransactionReceipt, eventName: string): LogDescription | null {
+        // Loop each log
+        for (const log of receipt.logs) {
+            // Decode
+            const decodedLog = this.pacaFinanceContract.contract.interface.parseLog(log);
+
+            debug("decodedLog=", decodedLog);
+
+            // Check to see if we have the correct name
+            if (eventName == decodedLog?.name)
+                return decodedLog;
+        }
+
+        // Didn't find
+        return null;
     }
 
     async compound(): Promise<boolean> {
@@ -312,10 +345,26 @@ Gas used: ${bnbUsd.toFixed()} BNB`;
             () => this.pacaFinanceContract.compoundAllRewards()
         );
 
+        // Get the log we want
+        const decodedLogEvent = this.findInReceiptLogs(clientTxnResponse.receipt, "RewardsCompounded");
+
+        const compoundedAmountBn = decodedLogEvent?.args[1];
+        let compoundedAmount: Decimal;
+
+        if (compoundedAmountBn) {
+            compoundedAmount = Decimal.fromBigNumberish(compoundedAmountBn);
+
+            logger.info("Found compounded amount: %s", compoundedAmount.toFixed());
+        }
+        else {
+            logger.error("Could not find compounded amount in logs.", decodedLogEvent);
+            compoundedAmount = rewards;
+        }
+
         // Add tp the claimed
         await Promise.all([
-            this.reportAction(rewards, "compound", clientTxnResponse),
-            DBProperty.addCompounded(this.publicKey, "usdt", rewards)
+            this.reportAction(compoundedAmount, "compound", clientTxnResponse),
+            DBProperty.addCompounded(this.publicKey, "usdt", compoundedAmount)
         ]);
 
         return true;
