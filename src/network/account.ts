@@ -1,7 +1,7 @@
 import { addDays, addMilliseconds, addMinutes, max as dateMax, setHours, setMilliseconds, setMinutes, setSeconds } from "date-fns";
 import { LogDescription, TransactionReceipt, TransactionResponse, Wallet } from "ethers";
 import { chain } from "lodash";
-import { provider, WBNB_BSC } from ".";
+import { provider, USDT_BSC, WBNB_BSC } from ".";
 import PacaFiannce from "../contracts/PacaFinance";
 import { DBProperty } from "../database";
 import { TimeType } from "../util";
@@ -279,7 +279,7 @@ Gas used: ${bnbUsd.toFixed()} BNB`;
         let claimedAmount: Decimal;
 
         if (claimedAmountBn) {
-            claimedAmount = Decimal.fromBigNumberish(claimedAmountBn);
+            claimedAmount = Decimal.fromBigNumberish(claimedAmountBn, USDT_BSC.decimals);
 
             logger.info("Found claimed amount: %s", claimedAmount.toFixed());
         }
@@ -352,7 +352,7 @@ Gas used: ${bnbUsd.toFixed()} BNB`;
         let compoundedAmount: Decimal;
 
         if (compoundedAmountBn) {
-            compoundedAmount = Decimal.fromBigNumberish(compoundedAmountBn);
+            compoundedAmount = Decimal.fromBigNumberish(compoundedAmountBn, USDT_BSC.decimals);
 
             logger.info("Found compounded amount: %s", compoundedAmount.toFixed());
         }
