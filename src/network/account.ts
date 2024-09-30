@@ -14,6 +14,7 @@ import Decimal from "decimal.js";
 import { DBStat } from "../database/models/DBStat";
 import Bluebird from "bluebird";
 import sendAllAlerts from "../alert";
+import { getBnbPrice } from "../helpers/Price";
 
 const debug = Debug("unibalancer:account");
 
@@ -52,6 +53,28 @@ export class Account {
         this.PropertiesNextRunKey = PropertiesNextRunKey + "-" + this.publicKey;
     }
 
+    /**
+     * Get a percent increase/decrease
+     */
+    static getPercentDelta(start: string | undefined, current: Decimal): string {
+        const startDecimal = new Decimal(start ?? 0);
+
+        let decimalValue : Decimal;
+
+        if (!startDecimal.gt(0))
+            decimalValue = new Decimal(0);
+        else
+            decimalValue = current.div(startDecimal).minus(1)
+
+        // To stringify
+        let returnString = decimalValue.times(100).toFixed(2) + "%";
+
+        // Add a puh-lus
+        if(decimalValue.gt(0))
+            returnString = "+" + returnString;
+
+        return returnString;
+    }
 
     /**
      * Get the next instruction
@@ -230,12 +253,21 @@ export class Account {
         action: ActionType,
         clientTxnResponse: ClientTransactionResponse
     ): Promise<void> {
-        const bnbUsd = await TransctionHelper.addDeficitFromTransaction(clientTxnResponse, action);
+        const [
+            bnbUsed,
+            bnbPrice
+        ] = await Promise.all([
+            TransctionHelper.addDeficitFromTransaction(clientTxnResponse, action),
+            getBnbPrice()
+        ]);
+
+        // Get the BNB as usd
+        const bnbUsedInUsd = bnbUsed.times(bnbPrice);
 
         const reportString = `Account ${this.readableKey} executed '${action}'
 
 Rewards amount: ${rewards.toFixed(2)} USDT
-Gas used: ${bnbUsd.toFixed()} BNB`;
+Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
 
         logger.info(reportString);
         await sendAllAlerts(reportString);
@@ -376,28 +408,51 @@ Gas used: ${bnbUsd.toFixed()} BNB`;
             totalStakeAmount,
             claimed,
             compounded,
-            bnbUsed,
-            gasBalance
+            totalBnbSpent,
+            gasBalance,
+            bnbPrice,
+            lastStat,
+            firstStat
         ] = await Promise.all([
             this.pacaFinanceContract.totalStakeAmount(),
             DBProperty.getClaimed(this.publicKey, "usdt"),
             DBProperty.getCompounded(this.publicKey, "usdt"),
             DBProperty.getDeficits(this.publicKey, "wbnb"),
-            this.gasBalance()
+            this.gasBalance(),
+            getBnbPrice(),
+            DBStat.findOne({ order: [["createdAt", "DESC"]] }),
+            DBStat.findOne({ order: [["createdAt", "ASC"]] })
         ]);
+
+        // Get the BNB as USD
+        const totalBnbSpentAsUsd = totalBnbSpent.times(bnbPrice);
+        const gasbalanceAsUsd = gasBalance.times(bnbPrice);
+
+        const stakeIncreasePercentSinceLast = Account.getPercentDelta(
+            lastStat?.stakeTotal,
+            totalStakeAmount.amount
+        );
+
+        const stakeIncreaseFromStart = totalStakeAmount.amount.minus( firstStat?.stakeTotal ?? 0  );
+        const stakeIncreasePercentSinceStart = Account.getPercentDelta(
+            firstStat?.stakeTotal,
+            totalStakeAmount.amount
+        );
+
 
         const reportSring = `Account ${this.readableKey} stats:
 
 Account: ${this.publicKey}
 
 Stake Count: ${totalStakeAmount.count}
-Stake Total: ${totalStakeAmount.amount.toFixed(2)} USDT
+Stake Total: ${totalStakeAmount.amount.toFixed(2)} USDT (${stakeIncreasePercentSinceLast})
+Total Stake Increase: ${stakeIncreaseFromStart.toFixed(2)} USDT (${stakeIncreasePercentSinceStart})
 
 Claimed: ${claimed.toFixed(2)} USDT
 Compounded: ${compounded.toFixed(2)} USDT
 
-Gas spent: ${bnbUsed.toFixed()} BNB
-Gas balance: ${gasBalance.toFixed()} BNB`;
+Gas spent (total): ${totalBnbSpent.toFixed()} BNB ($${totalBnbSpentAsUsd.toFixed(2)})
+Gas balance: ${gasBalance.toFixed()} BNB ($${gasbalanceAsUsd.toFixed(2)})`;
 
         // Report and log
         logger.info(reportSring);
@@ -410,7 +465,7 @@ Gas balance: ${gasBalance.toFixed()} BNB`;
             stakeTotal: totalStakeAmount.amount.toString(),
             claimed: claimed.toString(),
             compounded: compounded.toString(),
-            bnbUsed: bnbUsed.toString(),
+            bnbUsed: totalBnbSpent.toString(),
             gasBalance: gasBalance.toString()
         });
     }

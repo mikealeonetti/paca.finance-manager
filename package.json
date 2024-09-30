@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "tsc && NODE_OPTIONS=--enable-source-maps node dist/index.js",
     "calc": "tsc && NODE_OPTIONS=--enable-source-maps node dist/tools/optimal-calculator.js",
-    "test-email" : "tsc && node --enable-source-maps dist/tests/email.js"
+    "test-email": "tsc && node --enable-source-maps dist/tests/email.js"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +17,7 @@
     "@types/bluebird": "^3.5.42",
     "@types/debug": "^4.1.12",
     "@types/lodash": "^4.17.7",
+    "@types/memoizee": "^0.4.11",
     "@types/node": "^22.5.4",
     "@types/nodemailer": "^6.4.15",
     "@typescript-eslint/eslint-plugin": "^8.4.0",
@@ -30,6 +31,7 @@
     "ethers": "^6.13.2",
     "lodash": "^4.17.21",
     "logform": "^2.6.1",
+    "memoizee": "^0.4.17",
     "nodemailer": "^6.9.15",
     "sequelize": "^6.37.3",
     "sqlite3": "^5.1.7",
