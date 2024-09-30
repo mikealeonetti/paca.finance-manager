@@ -37,7 +37,7 @@ if (emailEnabled) {
     });
 }
 
-const nowFormatted = ()=>dateFormat(new Date(), "dd/MM/yyyy hh:mm:ss");
+const nowFormatted = ()=>dateFormat(new Date(), "Ppp");
 
 const sendEmail = debounce( async function() : Promise<void> {
     try {
