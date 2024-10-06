@@ -4,6 +4,7 @@ import sendAllAlerts from './alert';
 
 import Debug from 'debug';
 import { accounts } from "./network";
+import { formatDate } from "date-fns";
 
 const debug = Debug("unibalancer:engine");
 
@@ -54,9 +55,12 @@ export class Engine {
                         // Get the next action
                         const nextAction = await account.getNextAction();
 
+                        // Formatted date time string
+                        const formattedNextRun = formatDate(nextRun, "PPPPpppp");
+
                         // Send through TG
-                        await sendAllAlerts(`We are going to run a '${nextAction.name}' on ${account.readableKey} on ${nextRun}.`);
-                        logger.info(`We are going to run a '${nextAction.name}' on ${account.readableKey} on ${nextRun}.`);
+                        await sendAllAlerts(`We are going to run a '${nextAction.name}' on ${account.readableKey} on ${formattedNextRun}.`);
+                        logger.info(`We are going to run a '${nextAction.name}' on ${account.readableKey} on ${formattedNextRun}.`);
                         // Dont' keep notifying
                         notifiedAboutNextRun[account.publicKey] = true;
                     }

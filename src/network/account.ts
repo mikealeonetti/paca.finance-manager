@@ -56,7 +56,10 @@ export class Account {
     /**
      * Get a percent increase/decrease
      */
-    static getPercentDelta(start: string | undefined, current: Decimal): string {
+    static getPercentDelta(start: string | undefined, current: Decimal): {
+        delta : string,
+        percent : string
+    } {
         const startDecimal = new Decimal(start ?? 0);
 
         let decimalValue : Decimal;
@@ -67,13 +70,25 @@ export class Account {
             decimalValue = current.div(startDecimal).minus(1)
 
         // To stringify
-        let returnString = decimalValue.times(100).toFixed(2) + "%";
+        let percent = decimalValue.times(100).toFixed(2) + "%";
 
         // Add a puh-lus
         if(decimalValue.gt(0))
-            returnString = "+" + returnString;
+            percent = "+" + percent;
 
-        return returnString;
+        // The delta value
+        decimalValue = current.minus(startDecimal);
+
+        let delta = decimalValue.toFixed(2);
+
+        // Add a plersy
+        if(decimalValue.gt(0))
+            delta = "+" + delta;
+
+        return ({
+            percent,
+            delta 
+        });
     }
 
     /**
@@ -439,20 +454,40 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
             totalStakeAmount.amount
         );
 
+        const claimedIncreasedSinceLast = Account.getPercentDelta(
+            lastStat?.claimed,
+            claimed
+        );
+
+        const compounmdedIncreasedSinceLast = Account.getPercentDelta(
+            lastStat?.compounded,
+            compounded
+        );
+
+        const gasDeltaSinceLast = Account.getPercentDelta(
+            lastStat?.gasBalance,
+            gasBalance
+        );
+
+        const gasDeltaSinceStart = Account.getPercentDelta(
+            firstStat?.gasBalance,
+            gasBalance
+        );
 
         const reportSring = `Account ${this.readableKey} stats:
 
 Account: ${this.publicKey}
 
 Stake Count: ${totalStakeAmount.count}
-Stake Total: ${totalStakeAmount.amount.toFixed(2)} USDT (${stakeIncreasePercentSinceLast})
-Total Stake Increase: ${stakeIncreaseFromStart.toFixed(2)} USDT (${stakeIncreasePercentSinceStart})
+Stake Total: ${totalStakeAmount.amount.toFixed(2)} USDT (${stakeIncreasePercentSinceLast.delta}, ${stakeIncreasePercentSinceLast.percent})
+Total Stake Increase: ${stakeIncreaseFromStart.toFixed(2)} USDT (${stakeIncreasePercentSinceStart.delta}, ${stakeIncreasePercentSinceStart.percent})
 
-Claimed: ${claimed.toFixed(2)} USDT
-Compounded: ${compounded.toFixed(2)} USDT
+Claimed: ${claimed.toFixed(2)} USDT (${claimedIncreasedSinceLast.delta}, ${claimedIncreasedSinceLast.percent})
+Compounded: ${compounded.toFixed(2)} USDT (${compounmdedIncreasedSinceLast.delta}, ${compounmdedIncreasedSinceLast.percent})
 
 Gas spent (total): ${totalBnbSpent.toFixed()} BNB ($${totalBnbSpentAsUsd.toFixed(2)})
-Gas balance: ${gasBalance.toFixed()} BNB ($${gasbalanceAsUsd.toFixed(2)})`;
+Gas balance: ${gasBalance.toFixed()} BNB ($${gasbalanceAsUsd.toFixed(2)})
+Gas change: ${gasDeltaSinceLast.percent}, ${gasDeltaSinceStart.percent} overall`;
 
         // Report and log
         logger.info(reportSring);
