@@ -29,8 +29,8 @@ export class DBProperty extends Model<InferAttributes<DBProperty>, InferCreation
 	declare static getByKey: (key: string) => Promise<DBProperty | null>;
 	declare static setByKey: (key: string, value: string) => Promise<[DBProperty, boolean | null]>;
 
-	declare static addCompounded: (account: string, currencySymbol: string, amount: Decimal) => Promise<DBProperty>;
-	declare static addClaimed: (account: string, currencySymbol: string, amount: Decimal) => Promise<DBProperty>;
+	declare static addCompounded: (account: string, currencySymbol: string, amount: Decimal, createdAt? : Date) => Promise<DBProperty>;
+	declare static addClaimed: (account: string, currencySymbol: string, amount: Decimal, createdAt? : Date) => Promise<DBProperty>;
 	declare static getClaimed: (account: string, currencySymbol: string) => Promise<Decimal>;
 	declare static getCompounded: (account: string, currencySymbol: string) => Promise<Decimal>;
 	declare static addDeficits: (account: string, currencySymbol: string, feeAmount: Decimal, reason: string) => Promise<DBProperty>;
@@ -60,7 +60,7 @@ DBProperty.getCompounded = async function(account: string, currencySymbol: strin
 	return new Decimal( compounded?.value ?? 0 );
 }
 
-DBProperty.addCompounded = async function (account: string, currencySymbol: string, amount: Decimal): Promise<DBProperty> {
+DBProperty.addCompounded = async function (account: string, currencySymbol: string, amount: Decimal, createdAt? : Date): Promise<DBProperty> {
 	const currentKey = this.getCompoundKeyFromSymbol(account, currencySymbol);
 
 	// Get the fee
@@ -74,7 +74,8 @@ DBProperty.addCompounded = async function (account: string, currencySymbol: stri
 	const compoundHistoryPromise = await DBCompoundHistory.create({
 		account,
 		token: toUpper(currencySymbol),
-		amount: amount.toString()
+		amount: amount.toString(),
+		createdAt
 	});
 
 	// Save it
@@ -91,7 +92,7 @@ DBProperty.getClaimed = async function(account: string, currencySymbol: string) 
 	return new Decimal( claimed?.value ?? 0 );
 }
 
-DBProperty.addClaimed = async function (account: string, currencySymbol: string, amount: Decimal): Promise<DBProperty> {
+DBProperty.addClaimed = async function (account: string, currencySymbol: string, amount: Decimal, createdAt? : Date): Promise<DBProperty> {
 	const currentKey = this.getClaimKeyFromSymbol(account, currencySymbol);
 
 	// Get the fee
@@ -105,7 +106,8 @@ DBProperty.addClaimed = async function (account: string, currencySymbol: string,
 	const claimHistoryPromise = await DBClaimHistory.create({
 		account,
 		token: toUpper(currencySymbol),
-		amount: amount.toString()
+		amount: amount.toString(),
+		createdAt
 	});
 
 	// Save it

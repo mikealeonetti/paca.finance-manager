@@ -8,13 +8,15 @@ import Decimal from 'decimal.js';
 import '../helpers/DecimalUtil';
 import TransctionHelper from '../helpers/TransactionHelper';
 import { DBStat } from '../database/models/DBStat';
+import Bluebird from 'bluebird';
 
 const argv = minimist(process.argv.slice(2));
 
 async function getTransactionDetails(txHash: string, contract: ethers.Contract): Promise<{
     methodName: string,
     tx: ethers.TransactionResponse,
-    receipt: ethers.TransactionReceipt
+    receipt: ethers.TransactionReceipt,
+    timestamp : Date
 }> {
     const [
         tx,
@@ -28,6 +30,17 @@ async function getTransactionDetails(txHash: string, contract: ethers.Contract):
 
     assert.ok(tx, `Transaction not found for hash: ${txHash}`);
     assert.ok(receipt, `Transaction receipt not found for hash: ${txHash}`);
+    assert.ok(tx.blockHash, `Transaction block has not found for hash: ${txHash}`);
+
+    // Get the block for the timestamp
+    const block = await provider.getBlock(tx.blockHash);
+
+    assert.ok(block, `Could not get block for hash: ${txHash}`);
+
+    console.log("block=", block);
+
+    // Get the time
+    const timestamp = new Date(block.timestamp*1000);
 
     const parsedTx = contract.interface.parseTransaction({ data: tx.data, value: tx.value });
 
@@ -51,7 +64,8 @@ async function getTransactionDetails(txHash: string, contract: ethers.Contract):
     return ({
         methodName,
         tx,
-        receipt
+        receipt,
+        timestamp
     });
 }
 
@@ -87,7 +101,8 @@ async function getTransactionDetails(txHash: string, contract: ethers.Contract):
     const {
         methodName,
         tx,
-        receipt
+        receipt,
+        timestamp
     } = await getTransactionDetails(transactionHash, account!.pacaFinanceContract.contract);
 
     const isClaim = methodName == "claimAllRewards";
@@ -114,7 +129,7 @@ async function getTransactionDetails(txHash: string, contract: ethers.Contract):
     await TransctionHelper.addDeficitFromTransactionReceipt(receipt, action);
 
     // Add the amounts
-    await DBProperty[isClaim ? "addClaimed" : "addCompounded"](account.publicKey, "usdt", amount);
+    await DBProperty[isClaim ? "addClaimed" : "addCompounded"](account.publicKey, "usdt", amount, timestamp);
 
     // Save the stats
     await account.saveStats(false);
