@@ -3,7 +3,6 @@ import { provider, WBNB_BSC } from "../network";
 import { ClientTransactionResponse } from "../types";
 
 import Bluebird from "bluebird";
-import Debug from 'debug';
 import Decimal from "decimal.js";
 import { GAS_MAX_MULTIPLIER as GAS_LIMIT_MULTIPLIER, GAS_PRICE, TXN_RECEIPT_CHECK_DELAY_MS } from "../constants";
 import { DBProperty } from "../database";
@@ -11,11 +10,9 @@ import logger from "../logger";
 import DecimalUtil from "./DecimalUtil";
 import { merge } from "lodash";
 
-const debug = Debug("unibalancer:helpers:TransactionHelpers");
-
 export default class TransctionHelper {
-    static async addDeficitFromTransaction(clientTransactionResponse: ClientTransactionResponse, reason: string): Promise<Decimal> {
-        const { gasUsed, gasPrice } = clientTransactionResponse.receipt;
+    static async addDeficitFromTransactionReceipt(receipt: TransactionReceipt, reason: string): Promise<Decimal> {
+        const { gasUsed, gasPrice } = receipt;
 
         // Add the eth used
         const bnbUsed = new Decimal(gasUsed.toString())
@@ -24,10 +21,12 @@ export default class TransctionHelper {
 
         //DecimalUtil.fromBigNumberish( gasUsed, WETH_TOKEN.decimals );
 
-        debug("gasUsed=%s, gasPrice=%s, eth used=%s", gasUsed, gasPrice, bnbUsed);
+        logger.silly("gasUsed=%s, gasPrice=%s, eth used=%s", gasUsed, gasPrice, bnbUsed);
 
         // The address
-        const address = clientTransactionResponse.receipt.from;
+        const address = receipt.from;
+
+        logger.debug("Adding gas deficit: %s", bnbUsed);
 
         // Add the deficit
         await DBProperty.addDeficits(address, "wbnb", bnbUsed, reason);
@@ -38,13 +37,13 @@ export default class TransctionHelper {
     private static async resolveTransactionResponsePrivate(response: TransactionResponse): Promise<ClientTransactionResponse> {
         let receipt: TransactionReceipt | null = null;
 
-        debug("resolveTransactionResponsePrivate response=", response);
+        logger.silly("resolveTransactionResponsePrivate response=", response);
 
         while (receipt === null) {
             try {
                 receipt = await provider.getTransactionReceipt(response.hash)
 
-                debug("resolveTransactionResponse receipt=", receipt);
+                logger.silly("resolveTransactionResponse receipt=", receipt);
 
                 if (receipt === null) {
                     await Bluebird.delay(TXN_RECEIPT_CHECK_DELAY_MS);
@@ -54,7 +53,7 @@ export default class TransctionHelper {
                 // Return it
                 return ({ response, receipt });
             } catch (e) {
-                debug(`resolveTransactionResponse error:`, e)
+                logger.debug(`resolveTransactionResponse error:`, e)
                 throw e;
             }
         }
@@ -82,7 +81,7 @@ export default class TransctionHelper {
                 .toBigInt();
         }
 
-        debug("getCommonTxnOptions transaction=", transaction);
+        logger.silly("getCommonTxnOptions transaction=", transaction);
 
         return transaction;
     }
@@ -102,7 +101,7 @@ export default class TransctionHelper {
         // send the txn
         const response = await wallet.sendTransaction(transaction)
 
-        debug("sendTransaction response=", response);
+        logger.silly("sendTransaction response=", response);
 
         return this.resolveTransactionResponse(response);
     }
@@ -117,7 +116,7 @@ export default class TransctionHelper {
             provider.getFeeData()
         ]);
 
-        debug("estimatedGas=%s, feeData=", estimatedGas, feeData);
+        logger.silly("estimatedGas=%s, feeData=", estimatedGas, feeData);
 
         if (feeData.gasPrice == null) {
             throw new Error("Cannot calcualte gas price.");

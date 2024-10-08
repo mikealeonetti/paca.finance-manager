@@ -41,7 +41,7 @@ function formatFn( isFile : Boolean ) : winston.Logform.Format {
 		if( extras instanceof Array && extras.length>0 ) {
 			// Do we have any tags?
 			for( let i=0, { length }=extras; i<length; ++i ) {
-				const t = extras[ i ][ tagSymbol ];
+				const t = extras[ i ]?.[ tagSymbol ];
 
 				if( t ) {
 					// Set it

@@ -14,7 +14,7 @@ import Decimal from "decimal.js";
 import { DBStat } from "../database/models/DBStat";
 import Bluebird from "bluebird";
 import sendAllAlerts from "../alert";
-import { getBnbPrice } from "../helpers/Price";
+import { PriceHelper } from "../helpers/Price";
 
 const debug = Debug("unibalancer:account");
 
@@ -57,12 +57,12 @@ export class Account {
      * Get a percent increase/decrease
      */
     static getPercentDelta(start: string | undefined, current: Decimal): {
-        delta : string,
-        percent : string
+        delta: string,
+        percent: string
     } {
         const startDecimal = new Decimal(start ?? 0);
 
-        let decimalValue : Decimal;
+        let decimalValue: Decimal;
 
         if (!startDecimal.gt(0))
             decimalValue = new Decimal(0);
@@ -73,7 +73,7 @@ export class Account {
         let percent = decimalValue.times(100).toFixed(2) + "%";
 
         // Add a puh-lus
-        if(decimalValue.gt(0))
+        if (decimalValue.gt(0))
             percent = "+" + percent;
 
         // The delta value
@@ -82,12 +82,12 @@ export class Account {
         let delta = decimalValue.toFixed(2);
 
         // Add a plersy
-        if(decimalValue.gt(0))
+        if (decimalValue.gt(0))
             delta = "+" + delta;
 
         return ({
             percent,
-            delta 
+            delta
         });
     }
 
@@ -251,13 +251,13 @@ export class Account {
                 return clientTxnResponse;
             }
             catch (e) {
-                debug("Error with %s tries left.", triesLeft, e);
+                logger.debug("Error with %s tries left.", triesLeft, e);
 
                 if (--triesLeft < 0)
                     throw e;
             }
 
-            debug("Looping through.");
+            logger.silly("Looping through and waiting.");
 
             await Bluebird.delay(10_000);
         }
@@ -272,8 +272,8 @@ export class Account {
             bnbUsed,
             bnbPrice
         ] = await Promise.all([
-            TransctionHelper.addDeficitFromTransaction(clientTxnResponse, action),
-            getBnbPrice()
+            TransctionHelper.addDeficitFromTransactionReceipt(clientTxnResponse.receipt, action),
+            PriceHelper.getBnbPrice()
         ]);
 
         // Get the BNB as usd
@@ -350,7 +350,7 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
             // Decode
             const decodedLog = this.pacaFinanceContract.contract.interface.parseLog(log);
 
-            debug("decodedLog=", decodedLog);
+            logger.silly("decodedLog=", decodedLog);
 
             // Check to see if we have the correct name
             if (eventName == decodedLog?.name)
@@ -417,7 +417,7 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
         return true;
     }
 
-    async saveStats(): Promise<void> {
+    async saveStats(notify: boolean): Promise<void> {
 
         const [
             totalStakeAmount,
@@ -434,7 +434,7 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
             DBProperty.getCompounded(this.publicKey, "usdt"),
             DBProperty.getDeficits(this.publicKey, "wbnb"),
             this.gasBalance(),
-            getBnbPrice(),
+            PriceHelper.getBnbPrice(),
             DBStat.findOne({ order: [["createdAt", "DESC"]] }),
             DBStat.findOne({ order: [["createdAt", "ASC"]] })
         ]);
@@ -448,7 +448,7 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
             totalStakeAmount.amount
         );
 
-        const stakeIncreaseFromStart = totalStakeAmount.amount.minus( firstStat?.stakeTotal ?? 0  );
+        const stakeIncreaseFromStart = totalStakeAmount.amount.minus(firstStat?.stakeTotal ?? 0);
         const stakeIncreasePercentSinceStart = Account.getPercentDelta(
             firstStat?.stakeTotal,
             totalStakeAmount.amount
@@ -491,7 +491,9 @@ Gas change: ${gasDeltaSinceLast.percent}, ${gasDeltaSinceStart.percent} overall`
 
         // Report and log
         logger.info(reportSring);
-        await sendAllAlerts(reportSring);
+
+        if (notify)
+            await sendAllAlerts(reportSring);
 
         // Save the stats
         await DBStat.create({
@@ -535,7 +537,7 @@ Gas change: ${gasDeltaSinceLast.percent}, ${gasDeltaSinceStart.percent} overall`
 
                 await Promise.all([
                     DBProperty.setByKey(this.NextActionKey, (action.index + 1).toString()),
-                    this.saveStats()
+                    this.saveStats(true)
                 ]);
             }
         }

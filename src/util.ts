@@ -1,4 +1,5 @@
 import { isArray, isEmpty, toLower } from "lodash";
+import memoizee from "memoizee";
 
 export interface TimeType {
     hours: number;
@@ -90,6 +91,19 @@ export class Util {
             .sort((a, b) =>
                 (a.hours * 60 + a.minutes) -
                 (b.hours * 60 + b.minutes)
-        );
+            );
+    }
+
+    /**
+     * Decorator to wrap a funciton with memoizee.
+     * This PROBABLY won't work with instance variables without
+     * reflection.
+     * @param options The moizee options
+     * @returns The wrapped function
+     */
+    static Memoize(options?: memoizee.Options<any>) {
+        return function(target : any) {
+            return memoizee(target, options);
+        }
     }
 }
