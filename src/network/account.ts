@@ -4,7 +4,7 @@ import { chain } from "lodash";
 import { provider, USDT_BSC, WBNB_BSC } from ".";
 import PacaFiannce from "../contracts/PacaFinance";
 import { DBProperty } from "../database";
-import { TimeType } from "../util";
+import { TimeType, Util } from "../util";
 
 import Debug from 'debug';
 import logger from "../logger";
@@ -15,6 +15,7 @@ import { DBStat } from "../database/models/DBStat";
 import Bluebird from "bluebird";
 import sendAllAlerts from "../alert";
 import { PriceHelper } from "../helpers/Price";
+import util from 'util';
 
 const debug = Debug("unibalancer:account");
 
@@ -252,6 +253,11 @@ export class Account {
             }
             catch (e) {
                 logger.debug("Error with %s tries left.", triesLeft, e);
+                await sendAllAlerts(
+                    util.format(
+                        "Error with %s tries left.", triesLeft, e
+                    )
+                );
 
                 if (--triesLeft < 0)
                     throw e;
