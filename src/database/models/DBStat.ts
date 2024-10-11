@@ -3,12 +3,14 @@ import { sequelize } from "../common";
 
 export class DBStat extends Model<InferAttributes<DBStat>, InferCreationAttributes<DBStat>> {
     declare account : string;
+    declare pool : string;
     declare stakeCount : number;
     declare stakeTotal: string;
     declare claimed: string;
     declare compounded: string;
     declare bnbUsed: string;
     declare gasBalance: string;
+    declare dailyEarnings: string;
 
     // createdAt can be undefined during creation
     declare createdAt: CreationOptional<Date>;
@@ -20,6 +22,10 @@ DBStat.init({
     account: {
         type: DataTypes.STRING,
         allowNull: false,
+    },
+    pool : {
+        type : DataTypes.STRING,
+        allowNull : false
     },
     stakeCount: {
         type: DataTypes.NUMBER,
@@ -44,6 +50,10 @@ DBStat.init({
     gasBalance: {
         type: DataTypes.STRING,
         allowNull: false,
+    },
+    dailyEarnings : {
+        type: DataTypes.STRING,
+        allowNull: false
     },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE,

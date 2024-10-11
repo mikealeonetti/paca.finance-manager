@@ -294,6 +294,14 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
         await sendAllAlerts(reportString);
     }
 
+    async noop(): Promise<boolean> {
+        await sendAllAlerts(`Account [${this.readableKey}] executed a no-nop.`);
+        logger.info("Account [%s] executed a no-op.", this.readableKey);
+
+        // We did our duty.
+        return true;
+    }
+
     async claim(): Promise<boolean> {
         // Get the rewards before
         const [
@@ -433,7 +441,9 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
             gasBalance,
             bnbPrice,
             lastStat,
-            firstStat
+            firstStat,
+            rewards,
+            dailyEarnings
         ] = await Promise.all([
             this.pacaFinanceContract.totalStakeAmount(),
             DBProperty.getClaimed(this.publicKey, "usdt"),
@@ -442,7 +452,9 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
             this.gasBalance(),
             PriceHelper.getBnbPrice(),
             DBStat.findOne({ order: [["createdAt", "DESC"]] }),
-            DBStat.findOne({ order: [["createdAt", "ASC"]] })
+            DBStat.findOne({ order: [["createdAt", "ASC"]] }),
+            this.pacaFinanceContract.viewAllRewards(),
+            this.pacaFinanceContract.dailyEarnings()
         ]);
 
         // Get the BNB as USD
@@ -480,6 +492,11 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
             gasBalance
         );
 
+        const dailyEarningsDeltaSinceLast = Account.getPercentDelta(
+            lastStat?.dailyEarnings,
+            dailyEarnings
+        );
+
         const reportSring = `Account ${this.readableKey} stats:
 
 Account: ${this.publicKey}
@@ -487,6 +504,9 @@ Account: ${this.publicKey}
 Stake Count: ${totalStakeAmount.count}
 Stake Total: ${totalStakeAmount.amount.toFixed(2)} USDT (${stakeIncreasePercentSinceLast.delta}, ${stakeIncreasePercentSinceLast.percent})
 Total Stake Increase: ${stakeIncreaseFromStart.toFixed(2)} USDT (${stakeIncreasePercentSinceStart.delta}, ${stakeIncreasePercentSinceStart.percent})
+
+Current Rewards: ${rewards.toFixed(2)} USDT
+Daily Earnings: ${dailyEarnings.toFixed(2)} USDT (${dailyEarningsDeltaSinceLast.delta}, ${dailyEarningsDeltaSinceLast.percent})
 
 Claimed: ${claimed.toFixed(2)} USDT (${claimedIncreasedSinceLast.delta}, ${claimedIncreasedSinceLast.percent})
 Compounded: ${compounded.toFixed(2)} USDT (${compounmdedIncreasedSinceLast.delta}, ${compounmdedIncreasedSinceLast.percent})
@@ -504,12 +524,14 @@ Gas change: ${gasDeltaSinceLast.percent}, ${gasDeltaSinceStart.percent} overall`
         // Save the stats
         await DBStat.create({
             account: this.publicKey,
+            pool : "usdt",
             stakeCount: totalStakeAmount.count,
             stakeTotal: totalStakeAmount.amount.toString(),
             claimed: claimed.toString(),
             compounded: compounded.toString(),
             bnbUsed: totalBnbSpent.toString(),
-            gasBalance: gasBalance.toString()
+            gasBalance: gasBalance.toString(),
+            dailyEarnings: dailyEarnings.toString()
         });
     }
 
@@ -531,10 +553,7 @@ Gas change: ${gasDeltaSinceLast.percent}, ${gasDeltaSinceStart.percent} overall`
                     actionSuccess = await this.compound();
                     break;
                 case "noop":
-                    await sendAllAlerts(`Account [${this.readableKey}] executed a no-nop.`);
-                    logger.info("Account [%s] executed a no-op.", this.readableKey);
-
-                    actionSuccess = true;
+                    actionSuccess = await this.noop();
                     break;
             }
 
