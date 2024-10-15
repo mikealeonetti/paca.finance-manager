@@ -10,7 +10,7 @@ import TransactionHelper from '../helpers/TransactionHelper';
 
 const debug = Debug("unibalancer:constracts:paca.finance");
 
-interface TotalStakeAmountReturnType {
+export interface TotalStakeAmountReturnType {
     count: number;
     amount: Decimal;
 }

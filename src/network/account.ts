@@ -2,7 +2,7 @@ import { addDays, addMilliseconds, addMinutes, max as dateMax, setHours, setMill
 import { LogDescription, TransactionReceipt, TransactionResponse, Wallet } from "ethers";
 import { chain } from "lodash";
 import { provider, USDT_BSC, WBNB_BSC } from ".";
-import PacaFiannce from "../contracts/PacaFinance";
+import PacaFiannce, { TotalStakeAmountReturnType } from "../contracts/PacaFinance";
 import { DBProperty } from "../database";
 import { TimeType, Util } from "../util";
 
@@ -272,7 +272,8 @@ export class Account {
     async reportAction(
         rewards: Decimal,
         action: ActionType,
-        clientTxnResponse: ClientTransactionResponse
+        clientTxnResponse: ClientTransactionResponse,
+        stakeBefore : TotalStakeAmountReturnType
     ): Promise<void> {
         const [
             bnbUsed,
@@ -285,9 +286,11 @@ export class Account {
         // Get the BNB as usd
         const bnbUsedInUsd = bnbUsed.times(bnbPrice);
 
+        const  rewardsPercentOfStaked = rewards.div( stakeBefore.amount ).times( 100 );
+
         const reportString = `Account ${this.readableKey} executed '${action}'
 
-Rewards amount: ${rewards.toFixed(2)} USDT
+Rewards amount: ${rewards.toFixed(2)} USDT (${rewardsPercentOfStaked.toFixed(2)}%)
 Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
 
         logger.info(reportString);
@@ -306,10 +309,12 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
         // Get the rewards before
         const [
             rewards,
-            minimumRewards
+            minimumRewards,
+            stakeBefore
         ] = await Promise.all([
             this.pacaFinanceContract.viewAllRewards(),
-            this.pacaFinanceContract.minimumClaimAmount()
+            this.pacaFinanceContract.minimumClaimAmount(),
+            this.pacaFinanceContract.totalStakeAmount()
         ]);
 
         // Do we have enough?
@@ -351,7 +356,7 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
 
         // Add tp the claimed
         await Promise.all([
-            this.reportAction(claimedAmount, "claim", clientTxnResponse),
+            this.reportAction(claimedAmount, "claim", clientTxnResponse, stakeBefore),
             DBProperty.addClaimed(this.publicKey, "usdt", claimedAmount)
         ]);
 
@@ -379,10 +384,12 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
         // Get the rewards before
         const [
             rewards,
-            minimumRewards
+            minimumRewards,
+            stakeBefore
         ] = await Promise.all([
             this.pacaFinanceContract.viewAllRewards(),
-            this.pacaFinanceContract.minimumCompoundAmount()
+            this.pacaFinanceContract.minimumCompoundAmount(),
+            this.pacaFinanceContract.totalStakeAmount()
         ]);
 
         // Do we have enough?
@@ -424,7 +431,7 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
 
         // Add tp the claimed
         await Promise.all([
-            this.reportAction(compoundedAmount, "compound", clientTxnResponse),
+            this.reportAction(compoundedAmount, "compound", clientTxnResponse, stakeBefore),
             DBProperty.addCompounded(this.publicKey, "usdt", compoundedAmount)
         ]);
 
@@ -497,6 +504,8 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
             dailyEarnings
         );
 
+        const rewardsPercentOfStaked = rewards.div( totalStakeAmount.amount ).times( 100 );
+
         const reportSring = `Account ${this.readableKey} stats:
 
 Account: ${this.publicKey}
@@ -505,7 +514,7 @@ Stake Count: ${totalStakeAmount.count}
 Stake Total: ${totalStakeAmount.amount.toFixed(2)} USDT (${stakeIncreasePercentSinceLast.delta}, ${stakeIncreasePercentSinceLast.percent})
 Total Stake Increase: ${stakeIncreaseFromStart.toFixed(2)} USDT (${stakeIncreasePercentSinceStart.delta}, ${stakeIncreasePercentSinceStart.percent})
 
-Current Rewards: ${rewards.toFixed(2)} USDT
+Current Rewards: ${rewards.toFixed(2)} USDT (${rewardsPercentOfStaked.toFixed(2)}%)
 Daily Earnings: ${dailyEarnings.toFixed(2)} USDT (${dailyEarningsDeltaSinceLast.delta}, ${dailyEarningsDeltaSinceLast.percent})
 
 Claimed: ${claimed.toFixed(2)} USDT (${claimedIncreasedSinceLast.delta}, ${claimedIncreasedSinceLast.percent})
