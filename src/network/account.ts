@@ -241,6 +241,9 @@ export class Account {
         let triesLeft = 5;
 
         while (true) {
+            // Wait 1 second before trying
+            await Bluebird.delay(1_000);
+
             try {
                 // Try and run the function
                 const txnResponse = await fn();
@@ -265,6 +268,7 @@ export class Account {
 
             logger.silly("Looping through and waiting.");
 
+            // Wait 10 before trying again. 
             await Bluebird.delay(10_000);
         }
     }
