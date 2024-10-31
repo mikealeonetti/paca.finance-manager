@@ -268,7 +268,7 @@ export class Account {
 
             logger.silly("Looping through and waiting.");
 
-            // Wait 10 before trying again. 
+            // Wait 10 before trying again.     
             await Bluebird.delay(10_000);
         }
     }
@@ -277,7 +277,7 @@ export class Account {
         rewards: Decimal,
         action: ActionType,
         clientTxnResponse: ClientTransactionResponse,
-        stakeBefore : TotalStakeAmountReturnType
+        stakeBefore: TotalStakeAmountReturnType
     ): Promise<void> {
         const [
             bnbUsed,
@@ -290,7 +290,7 @@ export class Account {
         // Get the BNB as usd
         const bnbUsedInUsd = bnbUsed.times(bnbPrice);
 
-        const  rewardsPercentOfStaked = rewards.div( stakeBefore.amount ).times( 100 );
+        const rewardsPercentOfStaked = rewards.div(stakeBefore.amount).times(100);
 
         const reportString = `Account ${this.readableKey} executed '${action}'
 
@@ -462,8 +462,8 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
             DBProperty.getDeficits(this.publicKey, "wbnb"),
             this.gasBalance(),
             PriceHelper.getBnbPrice(),
-            DBStat.findOne({ order: [["createdAt", "DESC"]] }),
-            DBStat.findOne({ order: [["createdAt", "ASC"]] }),
+            DBStat.findOne({ where: { account: this.publicKey }, order: [["createdAt", "DESC"]] }),
+            DBStat.findOne({ where: { account: this.publicKey }, order: [["createdAt", "ASC"]] }),
             this.pacaFinanceContract.viewAllRewards(),
             this.pacaFinanceContract.dailyEarnings()
         ]);
@@ -508,7 +508,7 @@ Gas used: ${bnbUsed.toFixed()} BNB ($${bnbUsedInUsd.toFixed(2)})`;
             dailyEarnings
         );
 
-        const rewardsPercentOfStaked = rewards.div( totalStakeAmount.amount ).times( 100 );
+        const rewardsPercentOfStaked = rewards.div(totalStakeAmount.amount).times(100);
 
         const reportSring = `Account ${this.readableKey} stats:
 
@@ -537,7 +537,7 @@ Gas change: ${gasDeltaSinceLast.percent}, ${gasDeltaSinceStart.percent} overall`
         // Save the stats
         await DBStat.create({
             account: this.publicKey,
-            pool : "usdt",
+            pool: "usdt",
             stakeCount: totalStakeAmount.count,
             stakeTotal: totalStakeAmount.amount.toString(),
             claimed: claimed.toString(),

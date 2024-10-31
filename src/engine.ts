@@ -22,7 +22,7 @@ export class Engine {
             this.running = true;
 
             // Did we notify about the next runtime?
-            const notifiedAboutNextRun : Record<string, boolean> = {};
+            const notifiedAboutNextRun: Record<string, boolean> = {};
 
             await sendAllAlerts("Paca.Finance Manager started.")
 
@@ -75,6 +75,9 @@ export class Engine {
 
                         // Set to notify again
                         notifiedAboutNextRun[account.publicKey] = false;
+
+                        // Wait a tick
+                        await Bluebird.delay(1_000);
                     }
                 } // End accounts loop
 
